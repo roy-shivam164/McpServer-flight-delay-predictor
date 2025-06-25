@@ -9,7 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddMcpServer()
     .WithHttpTransport()
     .WithTools<JsonPlaceholderTool>()
-    .WithTools<SampleLlmTool>();
+    .WithTools<SampleLlmTool>()
+    .WithTools<FlightDelayCheckerTool>();
     //.WithResources<SimpleResourceType>();
 
 //builder.Services.AddOpenTelemetry()
