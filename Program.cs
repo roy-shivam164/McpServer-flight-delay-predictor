@@ -10,7 +10,8 @@ builder.Services.AddMcpServer()
     .WithHttpTransport()
     .WithTools<JsonPlaceholderTool>()
     .WithTools<SampleLlmTool>()
-    .WithTools<FlightDelayCheckerTool>();
+    .WithTools<FlightDelayCheckerTool>()
+    .WithTools<AirportWeatherTool>();
     //.WithResources<SimpleResourceType>();
 
 //builder.Services.AddOpenTelemetry()

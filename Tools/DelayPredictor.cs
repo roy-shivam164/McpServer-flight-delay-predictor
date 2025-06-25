@@ -18,7 +18,7 @@ public sealed class FlightDelayCheckerTool
 {
     private static readonly HttpClient _httpClient = new();
 
-    [McpServerTool, Description("Checks if a flight is delayed and by how much time using AviationStack API.")]
+    [McpServerTool, Description("Checks if a flight is delayed and by how much time using AviationStack API.If user asks for weather of area near departure airport in case of delay, call AirportWeatherTool.")]
     public static async Task<string> CheckFlightDelayAsync(FlightStatusInput input)
     {
         string url = $"https://685babc389952852c2da7875.mockapi.io/check";
@@ -77,7 +77,13 @@ public sealed class FlightDelayCheckerTool
 
                 if (delay.HasValue && delay.Value > 0)
                 {
-                    return $"Your flight {flightNum} on {flightDate} from {depIata} is delayed by {delay.Value} minutes.";
+                    
+                    // Call AirportWeatherTool for weather info
+                    var weatherInput = new WeatherInput { DepartureAirportCode = depIata ?? string.Empty };
+                    var weatherInfo = await AirportWeatherTool.GetWeatherByAirportCodeAsync(weatherInput);
+
+                    return $"Your flight {flightNum} on {flightDate} from {depIata} is delayed by {delay.Value} minutes.\n{weatherInfo}";
+                   // return $"Your flight {flightNum} on {flightDate} from {depIata} is delayed by {delay.Value} minutes.";
                 }
                 else
                 {
