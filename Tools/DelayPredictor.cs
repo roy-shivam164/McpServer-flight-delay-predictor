@@ -18,33 +18,37 @@ public sealed class FlightDelayCheckerTool
 {
     private static readonly HttpClient _httpClient = new();
 
-    [McpServerTool, Description("Checks if a flight is delayed and by how much time using AviationStack API.If user asks for weather of area near departure airport in case of delay, call AirportWeatherTool.")]
+    [McpServerTool, Description("Checks if a flight is delayed and by how much time using AviationStack API. If user asks for weather of area near departure airport in case of delay, call AirportWeatherTool.")]
     public static async Task<string> CheckFlightDelayAsync(FlightStatusInput input)
     {
-        string url = $"https://685babc389952852c2da7875.mockapi.io/check";
+        string url = $"https://api.aviationstack.com/v1/flights?access_key=1d3ba558b88344382ce52c64fcdacf02";
 
         var response = await _httpClient.GetAsync(url);
         var json = await response.Content.ReadAsStringAsync();
 
         using var doc = JsonDocument.Parse(json);
 
-        // The root is an array
-        if (doc.RootElement.ValueKind != JsonValueKind.Array || doc.RootElement.GetArrayLength() == 0)
-            return "API response format error: root array not found or empty.";
+        // The root is now an object, not an array
+        if (doc.RootElement.ValueKind != JsonValueKind.Object)
+            return "API response format error: root object not found.";
 
-        var firstObj = doc.RootElement[0];
-        if (!firstObj.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array)
+        if (!doc.RootElement.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array)
             return "API response format error: 'data' array not found.";
 
         foreach (var flight in data.EnumerateArray())
         {
-            // Get flight number safely
+            // Get flight number safely, fallback to 'number' if 'iata' is null
             string? flightNum = null;
-            if (flight.TryGetProperty("flight", out var flightObj) &&
-                flightObj.TryGetProperty("iata", out var numberProp) &&
-                numberProp.ValueKind == JsonValueKind.String)
+            if (flight.TryGetProperty("flight", out var flightObj))
             {
-                flightNum = numberProp.GetString();
+                if (flightObj.TryGetProperty("iata", out var numberProp) && numberProp.ValueKind == JsonValueKind.String && !string.IsNullOrEmpty(numberProp.GetString()))
+                {
+                    flightNum = numberProp.GetString();
+                }
+                else if (flightObj.TryGetProperty("number", out var fallbackNumberProp) && fallbackNumberProp.ValueKind == JsonValueKind.String)
+                {
+                    flightNum = fallbackNumberProp.GetString();
+                }
             }
 
             // Get flight date safely
@@ -57,7 +61,8 @@ public sealed class FlightDelayCheckerTool
 
             // Get departure airport code safely
             string? depIata = null;
-            if (flight.TryGetProperty("departure", out var depObj) &&
+            JsonElement depObj = default;
+            if (flight.TryGetProperty("departure", out depObj) &&
                 depObj.TryGetProperty("iata", out var depIataProp) &&
                 depIataProp.ValueKind == JsonValueKind.String)
             {
@@ -77,13 +82,11 @@ public sealed class FlightDelayCheckerTool
 
                 if (delay.HasValue && delay.Value > 0)
                 {
-                    
-                    // Call AirportWeatherTool for weather info
-                    var weatherInput = new WeatherInput { DepartureAirportCode = depIata ?? string.Empty };
-                    var weatherInfo = await AirportWeatherTool.GetWeatherByAirportCodeAsync(weatherInput);
+                    //// Call AirportWeatherTool for weather info
+                    //var cityName = await AirportCityPromptTool.GetCityPromptByAirportCodeAsync(new AirportCityInput { DepartureAirportCode = depIata });
+                    //var weatherInfo = await AirportCityWeather.GetWeatherByCityNameAsync(new CityInput { CityName = cityName });
 
-                    return $"Your flight {flightNum} on {flightDate} from {depIata} is delayed by {delay.Value} minutes.\n{weatherInfo}";
-                   // return $"Your flight {flightNum} on {flightDate} from {depIata} is delayed by {delay.Value} minutes.";
+                    return $"Your flight {flightNum} on {flightDate} from {depIata} is delayed by {delay.Value} minutes.\n";
                 }
                 else
                 {

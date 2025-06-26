@@ -11,7 +11,8 @@ builder.Services.AddMcpServer()
     .WithTools<JsonPlaceholderTool>()
     .WithTools<SampleLlmTool>()
     .WithTools<FlightDelayCheckerTool>()
-    .WithTools<AirportWeatherTool>();
+    .WithTools<AirportCityWeather>()
+    .WithTools<AirportCityPromptTool>();
     //.WithResources<SimpleResourceType>();
 
 //builder.Services.AddOpenTelemetry()
