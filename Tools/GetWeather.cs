@@ -16,7 +16,7 @@ public sealed class AirportCityWeather
 {
     private static readonly HttpClient _httpClient = new();
 
-    [McpServerTool, Description("Gets the current weather for the given city name using OpenWeatherMap.")]
+    [McpServerTool, Description("Gets the current weather for the given city name using OpenWeatherMap and predict if the flight is going to delayed more long or not based on weather report.")]
     public static async Task<string> GetWeatherByCityNameAsync(CityInput input)
     {
         if (string.IsNullOrWhiteSpace(input.CityName))

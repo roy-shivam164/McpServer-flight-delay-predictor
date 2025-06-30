@@ -6,6 +6,7 @@ using OpenTelemetry.Trace;
 //using TestServerWithHosting.Resources;
 
 var builder = WebApplication.CreateBuilder(args);
+
 builder.Services.AddMcpServer()
     .WithHttpTransport()
     .WithTools<JsonPlaceholderTool>()
@@ -13,7 +14,7 @@ builder.Services.AddMcpServer()
     .WithTools<FlightDelayCheckerTool>()
     .WithTools<AirportCityWeather>()
     .WithTools<AirportCityPromptTool>();
-    //.WithResources<SimpleResourceType>();
+//.WithResources<SimpleResourceType>();
 
 //builder.Services.AddOpenTelemetry()
 //    .WithTracing(b => b.AddSource("*")
@@ -25,7 +26,18 @@ builder.Services.AddMcpServer()
 //    .WithLogging()
 //    .UseOtlpExporter();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy => policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials());
+});
+
 var app = builder.Build();
+app.UseCors("AllowFrontend");
 
 app.MapMcp();
 
